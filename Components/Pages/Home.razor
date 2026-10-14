@@ -1,0 +1,65 @@
+﻿@page "/"
+@rendermode InteractiveServer
+
+
+@using InstructorPanel.SimConnect
+
+@inject ISimConnectService _simConnect;
+
+<PageTitle>Home</PageTitle>
+@* 
+<div class="form-field">
+    <label for="fieldText" class="form-label">Email address</label>
+    <input type="email" class="form-control" id="fieldText" placeholder="name@example.com">
+    <div class="form-text">
+        We’ll never share your email with anyone else.
+    </div>
+</div> *@
+<form>
+Position:
+<div class="grid grid-cols-3">
+    <div>
+        <label for="latitude" class="form-label">Latitude</label>
+        <input type="text" class="form-control" id="latitude" @bind="data.Latitude">
+    </div>
+     <div>
+        <label for="longitude" class="form-label">Longitude</label>
+        <input type="text" class="form-control" id="longitude" @bind="data.Longitude">
+    </div>
+    <div>
+        <label for="altitude" class="form-label">Altitude</label>
+        <input type="text" class="form-control" id="altitude" @bind="data.Altitude">
+    </div>
+</div>
+
+<button type="submit" class="btn" @onclick="Fly">Fly</button>
+</form>
+
+@code {
+
+    public class InstructorData {
+        public double Latitude { get; set; } = 41.0444;
+        public double Longitude { get; set; } = 16.3259;
+        public uint Altitude { get; set; } = 4000;
+    }
+
+    public InstructorData data { get; set; } = new();
+
+
+    private async Task Fly()
+    {
+        while (true)
+        {
+            _simConnect.Teleport(data.Latitude, data.Longitude, data.Altitude);
+
+
+            await Task.Delay(3000);
+
+            _simConnect.SetHeading(68);
+            _simConnect.SetPitch(3);
+            _simConnect.SetIas(200);
+            _simConnect.SetSpeed(200);
+        }
+        
+    }
+}
