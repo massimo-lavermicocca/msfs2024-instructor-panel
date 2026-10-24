@@ -7,14 +7,6 @@
 @inject ISimConnectService _simConnect;
 
 <PageTitle>Home</PageTitle>
-@* 
-<div class="form-field">
-    <label for="fieldText" class="form-label">Email address</label>
-    <input type="email" class="form-control" id="fieldText" placeholder="name@example.com">
-    <div class="form-text">
-        We’ll never share your email with anyone else.
-    </div>
-</div> *@
 <form>
 Position:
 <div class="grid grid-cols-3">
@@ -29,6 +21,14 @@ Position:
     <div>
         <label for="altitude" class="form-label">Altitude</label>
         <input type="text" class="form-control" id="altitude" @bind="data.Altitude">
+    </div
+    <div>
+        <label for="heading" class="form-label">Heading</label>
+        <input type="text" class="form-control" id="heading" @bind="data.Heading">
+    </div>
+    <div>
+        <label for="speed" class="form-label">Speed</label>
+        <input type="text" class="form-control" id="speed" @bind="data.Speed">
     </div>
 </div>
 
@@ -38,9 +38,11 @@ Position:
 @code {
 
     public class InstructorData {
-        public double Latitude { get; set; } = 41.0444;
-        public double Longitude { get; set; } = 16.3259;
-        public uint Altitude { get; set; } = 4000;
+        public double Latitude { get; set; } = 41.05;
+        public double Longitude { get; set; } = 16.4550;
+        public uint Altitude { get; set; } = 3000;
+        public int Heading { get; set; } = 65;
+        public uint Speed { get; set; } = 200;
     }
 
     public InstructorData data { get; set; } = new();
@@ -48,17 +50,20 @@ Position:
 
     private async Task Fly()
     {
+        _simConnect.SetIas(data.Speed);
+            _simConnect.SetSpeed(data.Speed);
+
         while (true)
         {
             _simConnect.Teleport(data.Latitude, data.Longitude, data.Altitude);
 
 
-            await Task.Delay(3000);
+            await Task.Delay(2000);
 
-            _simConnect.SetHeading(68);
+            _simConnect.SetHeading(data.Heading);
             _simConnect.SetPitch(3);
-            _simConnect.SetIas(200);
-            _simConnect.SetSpeed(200);
+            
+            _simConnect.SetRoll(0);
         }
         
     }
