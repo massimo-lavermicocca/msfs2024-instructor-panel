@@ -11,11 +11,10 @@
   </ItemGroup>
 
 	<ItemGroup>
-		<!-- ADATTA i percorsi alla tua installazione dell'SDK -->
 		<Reference Include="Microsoft.FlightSimulator.SimConnect">
-			<HintPath>C:\MSFS 2024 SDK\SimConnect SDK\lib\managed\Microsoft.FlightSimulator.SimConnect.dll</HintPath>
+			<HintPath>..\..\SDK\lib\managed\Microsoft.FlightSimulator.SimConnect.dll</HintPath>
 		</Reference>
-		<None Include="C:\MSFS 2024 SDK\SimConnect SDK\lib\SimConnect.dll">
+		<None Include="..\..\SDK\lib\SimConnect.dll">
 			<Link>SimConnect.dll</Link>
 			<CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
 		</None>
