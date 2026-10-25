@@ -1,4 +1,0 @@
-<Solution>
-  <Project Path="../InstructorPanel.SimConnect/InstructorPanel.SimConnect.csproj" />
-  <Project Path="InstructorPanelWithUI.csproj" />
-</Solution>

@@ -1,7 +1,7 @@
 using InstructorPanel.SimConnect;
-using InstructorPanelWithUI.Components;
+using InstructorPanel.UI.Components;
 
-namespace InstructorPanelWithUI
+namespace InstructorPanel.UI
 {
     public class Program
     {
