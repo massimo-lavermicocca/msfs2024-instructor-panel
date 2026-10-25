@@ -1,6 +1,6 @@
 # MSFS 2024 Instructor Panel
 
-A web-based instructor panel for **Microsoft Flight Simulator 2024**, instructor panels used in full-flight simulators. It lets an instructor reposition the aircraft and set its flight state from a browser while the sim is running, using SimConnect.
+A web-based instructor panel for **Microsoft Flight Simulator 2024**, instructor panels used in full-flight simulators. It lets an instructor reposition the aircraft and set its flight state from a browser while the sim is running, using SimConnect. For now, the project has never been tested once.
 
 The first target aircraft is the **PMDG 737**.
 
