@@ -201,3 +201,6 @@ __pycache__/
 
 # Windows thumbnail cache files
 Thumbs.db
+
+
+src/InstructorPanel.UI/appsettings.Development.Custom.json

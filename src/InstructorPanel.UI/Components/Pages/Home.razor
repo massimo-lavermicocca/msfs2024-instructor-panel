@@ -1,13 +1,8 @@
 ﻿@page "/"
 @rendermode InteractiveServer
 
-
-@using InstructorPanel.SimConnect
-
-@inject ISimConnectService _simConnect;
-
 <PageTitle>Home</PageTitle>
-<form>
+
 Position:
 <div class="grid grid-cols-3">
     <div>
@@ -21,7 +16,7 @@ Position:
     <div>
         <label for="altitude" class="form-label">Altitude</label>
         <input type="text" class="form-control" id="altitude" @bind="data.Altitude">
-    </div
+    </div>
     <div>
         <label for="heading" class="form-label">Heading</label>
         <input type="text" class="form-control" id="heading" @bind="data.Heading">
@@ -31,40 +26,13 @@ Position:
         <input type="text" class="form-control" id="speed" @bind="data.Speed">
     </div>
 </div>
-
-<button type="submit" class="btn" @onclick="Fly">Fly</button>
-</form>
-
-@code {
-
-    public class InstructorData {
-        public double Latitude { get; set; } = 41.05;
-        public double Longitude { get; set; } = 16.4550;
-        public uint Altitude { get; set; } = 3000;
-        public int Heading { get; set; } = 65;
-        public uint Speed { get; set; } = 200;
-    }
-
-    public InstructorData data { get; set; } = new();
-
-
-    private async Task Fly()
+    @if (isPreparingAircraft == false)
     {
-        _simConnect.SetIas(data.Speed);
-            _simConnect.SetSpeed(data.Speed);
-
-        while (true)
-        {
-            _simConnect.Teleport(data.Latitude, data.Longitude, data.Altitude);
-
-
-            await Task.Delay(2000);
-
-            _simConnect.SetHeading(data.Heading);
-            _simConnect.SetPitch(3);
-            
-            _simConnect.SetRoll(0);
-        }
-        
+        <button  class="btn" @onclick="StartPreparingAircraft">Prepare aircraft</button>
     }
-}
+    else
+    {
+        <button  class="btn" @onclick="Stop">Stop</button>
+    }
+
+
