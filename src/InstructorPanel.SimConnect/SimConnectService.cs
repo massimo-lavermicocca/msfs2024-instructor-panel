@@ -7,7 +7,7 @@ using Microsoft.FlightSimulator.SimConnect;
 public sealed class SimConnectService : BackgroundService, ISimConnectService
 {
     private enum Def { Teleport, Speed, Pitch, Heading, Altitude, Roll }
-    private enum Req { Altitude }
+    private enum Req { Altitude, Waypoints }
     private enum Evt { PmdgFlaps }
     private enum Grp { Pmdg }
 
@@ -42,6 +42,21 @@ public sealed class SimConnectService : BackgroundService, ISimConnectService
     private volatile bool _connected;
     private volatile bool _reconnect;
     private TaskCompletionSource<double>? _altitudeRequest;
+
+    // The facilities list can be split by SimConnect into several messages, so we collect them until all arrived.
+    private sealed class WaypointCollector
+    {
+        public readonly List<Waypoint> Items = new();
+        // Result is null when the request failed (exception from the sim, disconnect, error while reading).
+        public readonly TaskCompletionSource<IReadOnlyList<Waypoint>?> Tcs =
+            new(TaskCreationOptions.RunContinuationsAsynchronously);
+    }
+
+    // Max messages read in one go while waiting for a waypoint list (see Pump).
+    private const int MaxDrain = 1000;
+
+    private readonly SemaphoreSlim _waypointGate = new(1, 1);   // one waypoint request at a time
+    private volatile WaypointCollector? _waypointCollector;
 
     public SimConnectService(ILogger<SimConnectService> log)
     {
@@ -95,6 +110,29 @@ public sealed class SimConnectService : BackgroundService, ISimConnectService
     public bool SetRoll(int degrees)
         => Set(Def.Roll, new Value { V = degrees * RollSign }, "Roll");
 
+    public async Task<IReadOnlyList<Waypoint>?> GetWaypointsAsync(CancellationToken cancellationToken = default)
+    {
+        await _waypointGate.WaitAsync(cancellationToken);
+        try
+        {
+            var collector = new WaypointCollector();
+            _waypointCollector = collector;
+
+            // Asks SimConnect for every waypoint currently in the sim's facilities cache.
+            var requested = Send(sc => sc.RequestFacilitiesList(SIMCONNECT_FACILITY_LIST_TYPE.WAYPOINT, Req.Waypoints),
+                "Waypoint list request");
+            if (!requested) return null;
+
+            // One-shot request: wait for the reply, no timer. The caller can still cancel via the token.
+            return await collector.Tcs.Task.WaitAsync(cancellationToken);
+        }
+        finally
+        {
+            _waypointCollector = null;
+            _waypointGate.Release();
+        }
+    }
+
     // ---------------------------------------------------------------- helpers
 
     private bool Set<T>(Def def, T data, string what) where T : struct
@@ -147,15 +185,27 @@ public sealed class SimConnectService : BackgroundService, ISimConnectService
 
             if (_msgEvent.WaitOne(200))
             {
-                lock (_lock)
-                {
-                    try { _sc?.ReceiveMessage(); }
-                    catch (Exception ex) { _log.LogWarning(ex, "ReceiveMessage failed"); _reconnect = true; }
-                }
+                lock (_lock) Pump();
             }
         }
 
         lock (_lock) Disconnect();
+    }
+
+    // _msgEvent is an AutoResetEvent: it is signalled once even when several messages are queued, and
+    // ReceiveMessage() reads only one. A waypoint list is split into many messages that arrive together, so
+    // reading one per signal leaves the last chunks in the queue and the request never completes.
+    // While a waypoint request is waiting we therefore keep reading until it completes (or the queue is empty).
+    private void Pump()
+    {
+        try { _sc?.ReceiveMessage(); }
+        catch (Exception ex) { _log.LogWarning(ex, "ReceiveMessage failed"); _reconnect = true; return; }
+
+        for (var i = 0; i < MaxDrain && _waypointCollector is { Tcs.Task.IsCompleted: false }; i++)
+        {
+            try { _sc?.ReceiveMessage(); }
+            catch (Exception ex) { _log.LogDebug(ex, "No more messages to read"); break; }
+        }
     }
 
     private void TryConnect()
@@ -165,17 +215,57 @@ public sealed class SimConnectService : BackgroundService, ISimConnectService
             var sc = new SimConnect("Pmdg737Api", IntPtr.Zero, 0, _msgEvent, 0);
             sc.OnRecvOpen += OnOpen;
             sc.OnRecvQuit += (_, _) => { _log.LogInformation("MSFS closed"); _connected = false; _reconnect = true; };
-            sc.OnRecvException += (_, d) => _log.LogWarning("SimConnect exception: {Ex}", (SIMCONNECT_EXCEPTION)d.dwException);
+            sc.OnRecvException += (_, d) =>
+            {
+                _log.LogWarning("SimConnect exception: {Ex}", (SIMCONNECT_EXCEPTION)d.dwException);
+                // The sim refused something while we wait for the waypoints: don't leave the caller waiting forever.
+                _waypointCollector?.Tcs.TrySetResult(null);
+            };
             sc.OnRecvSimobjectData += (_, d) =>
             {
                 if ((Req)d.dwRequestID == Req.Altitude)
                     _altitudeRequest?.TrySetResult(((Value)d.dwData[0]).V);
             };
+            sc.OnRecvWaypointList += OnWaypointList;
             _sc = sc;
         }
         catch (Exception)
         {
             _sc = null; // sim not running yet: try again later
+        }
+    }
+
+    private void OnWaypointList(SimConnect sc, SIMCONNECT_RECV_WAYPOINT_LIST data)
+    {
+        if ((Req)data.dwRequestID != Req.Waypoints) return;
+
+        var collector = _waypointCollector;
+        if (collector is null) return;
+
+        try
+        {
+            var before = collector.Items.Count;
+            if (data.rgData is not null)
+            {
+                foreach (var item in data.rgData)
+                {
+                    if (item is SIMCONNECT_DATA_FACILITY_WAYPOINT w)
+                        collector.Items.Add(new Waypoint(w.Ident?.Trim() ?? "", w.Region?.Trim() ?? "", w.Latitude, w.Longitude));
+                }
+            }
+
+            // dwEntryNumber = 0..dwOutOf-1: which message this is; dwOutOf = total messages of the list.
+            _log.LogInformation("Waypoint list message {Entry}/{Total}: {Received} entries, {Parsed} parsed",
+                data.dwEntryNumber + 1, data.dwOutOf, data.dwArraySize, collector.Items.Count - before);
+
+            if (data.dwEntryNumber + 1 >= data.dwOutOf)
+                collector.Tcs.TrySetResult(collector.Items);
+        }
+        catch (Exception ex)
+        {
+            // Must not escape: it would make ReceiveMessage fail, trigger a reconnect and strand the caller.
+            _log.LogError(ex, "Reading the waypoint list failed");
+            collector.Tcs.TrySetResult(null);
         }
     }
 
@@ -218,5 +308,8 @@ public sealed class SimConnectService : BackgroundService, ISimConnectService
         _connected = false;
         try { _sc?.Dispose(); } catch { }
         _sc = null;
+
+        // Connection lost (sim closed, call failed): a pending waypoint request can no longer be answered.
+        _waypointCollector?.Tcs.TrySetResult(null);
     }
 }

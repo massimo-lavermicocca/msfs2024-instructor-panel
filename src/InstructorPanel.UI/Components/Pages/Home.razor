@@ -1,38 +1,50 @@
 ﻿@page "/"
 @rendermode InteractiveServer
 
+@* Required *@
+<MudThemeProvider />
+<MudPopoverProvider />
+
+@* Needed for dialogs *@
+<MudDialogProvider />
+
+@* Needed for snackbars *@
+<MudSnackbarProvider />
+
 <PageTitle>Home</PageTitle>
 
 Position:
-<div class="grid grid-cols-3">
-    <div>
-        <label for="latitude" class="form-label">Latitude</label>
-        <input type="text" class="form-control" id="latitude" @bind="data.Latitude">
-    </div>
-     <div>
-        <label for="longitude" class="form-label">Longitude</label>
-        <input type="text" class="form-control" id="longitude" @bind="data.Longitude">
-    </div>
-    <div>
-        <label for="altitude" class="form-label">Altitude</label>
-        <input type="text" class="form-control" id="altitude" @bind="data.Altitude">
-    </div>
-    <div>
-        <label for="heading" class="form-label">Heading</label>
-        <input type="text" class="form-control" id="heading" @bind="data.Heading">
-    </div>
-    <div>
-        <label for="speed" class="form-label">Speed</label>
-        <input type="text" class="form-control" id="speed" @bind="data.Speed">
-    </div>
-</div>
+<MudGrid>
+    <MudItem xs="4">
+         <MudAutocomplete T="string" Label="Waypoint"
+               ValueChanged="OnWaypointSelected" SearchFunc="@SearchWaypoint" 
+               AdornmentIcon="@Icons.Material.Filled.Search" AdornmentColor="Color.Primary" />
+    </MudItem>
+    <MudItem xs="4">
+        <MudTextField @bind-Value="Data.Latitude" Label="Latitude" Variant="Variant.Outlined"></MudTextField>
+    </MudItem>
+    <MudItem xs="4">
+        <MudTextField @bind-Value="Data.Longitude" Label="Longitude" Variant="Variant.Outlined"></MudTextField>
+    </MudItem>
+    <MudItem xs="4">
+        <MudTextField @bind-Value="Data.Altitude" Label="Altitude" Variant="Variant.Outlined"></MudTextField>
+    </MudItem>
+    <MudItem xs="4">
+        <MudTextField @bind-Value="Data.Heading" Label="Heading" Variant="Variant.Outlined"></MudTextField>
+    </MudItem>
+    <MudItem xs="4">
+        <MudTextField @bind-Value="Data.Speed" Label="Speed" Variant="Variant.Outlined"></MudTextField>
+    </MudItem>
+</MudGrid>
+<br />
+
     @if (isPreparingAircraft == false)
     {
-        <button  class="btn" @onclick="StartPreparingAircraft">Prepare aircraft</button>
+        <MudButton Variant="Variant.Filled" Color="Color.Primary" @onclick="StartPreparingAircraft">Prepare aircraft</MudButton>
     }
     else
     {
-        <button  class="btn" @onclick="Stop">Stop</button>
+        <MudButton Variant="Variant.Filled" Color="Color.Secondary" @onclick="StartPreparingAircraft">Stop</MudButton>
     }
 
 

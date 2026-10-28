@@ -1,5 +1,6 @@
 using InstructorPanel.SimConnect;
 using InstructorPanel.UI.Components;
+using MudBlazor.Services;
 
 namespace InstructorPanel.UI
 {
@@ -18,6 +19,7 @@ namespace InstructorPanel.UI
             builder.Services.AddSingleton<ISimConnectService>(sp => sp.GetRequiredService<SimConnectService>());
             builder.Services.AddHostedService(sp => sp.GetRequiredService<SimConnectService>());
 
+            builder.Services.AddMudServices();
 
             var app = builder.Build();
 
@@ -33,6 +35,8 @@ namespace InstructorPanel.UI
             app.MapStaticAssets();
             app.MapRazorComponents<App>()
                 .AddInteractiveServerRenderMode();
+
+            
 
             app.Run();                 
         }
