@@ -15,7 +15,9 @@ namespace InstructorPanel.UI.Models
 #if DEBUG
             try
             {
-                var _temp = JsonConvert.DeserializeObject<Dictionary<string, object>>(File.ReadAllText("appsettings.Development.Custom.json"));
+                var _temp = JsonConvert.DeserializeObject<Dictionary<string, object>>(
+                    File.ReadAllText("appsettings.Development.Custom.json")
+                );
                 Longitude = (double)_temp["Longitude"];
                 Latitude = (double)_temp["Latitude"];
                 Altitude = (uint)(long)_temp["Altitude"];

@@ -11,19 +11,21 @@ namespace InstructorPanel.UI.Components.Pages
         protected bool isPreparingAircraft;
 
         protected string SelectedWaypoint = null;
-        [Inject] protected ISimConnectService _simConnect { get; set; }
+
+        [Inject]
+        protected ISimConnectService _simConnect { get; set; }
 
         protected IReadOnlyList<Waypoint?> _wayPoints { get; set; } = new List<Waypoint>();
 
         protected override async Task OnAfterRenderAsync(bool firstRender)
         {
-            if (!firstRender) return;
+            if (!firstRender)
+                return;
             _wayPoints = await _simConnect.GetWaypointsAsync();
         }
 
         protected async Task StartPreparingAircraft()
         {
-
             _simConnect.SetIas(Data.Speed);
             _simConnect.SetSpeed(Data.Speed);
 
@@ -39,7 +41,11 @@ namespace InstructorPanel.UI.Components.Pages
             isPreparingAircraft = false;
         }
 
-        protected async Task PrepareAircraft(ISimConnectService simConnect, InstructorData data, CancellationToken token)
+        protected async Task PrepareAircraft(
+            ISimConnectService simConnect,
+            InstructorData data,
+            CancellationToken token
+        )
         {
             while (!token.IsCancellationRequested)
             {
@@ -54,9 +60,17 @@ namespace InstructorPanel.UI.Components.Pages
             }
         }
 
-        protected async Task<IEnumerable<string>> SearchWaypoint(string value, CancellationToken token)
+        protected async Task<IEnumerable<string>> SearchWaypoint(
+            string value,
+            CancellationToken token
+        )
         {
-            return _wayPoints.Where(x => x.Name.Contains(value ?? "", StringComparison.InvariantCultureIgnoreCase)).Select(x => x.Name).OrderBy(x => x);
+            return _wayPoints
+                .Where(x =>
+                    x.Name.Contains(value ?? "", StringComparison.InvariantCultureIgnoreCase)
+                )
+                .Select(x => x.Name)
+                .OrderBy(x => x);
         }
 
         protected void OnWaypointSelected(string value)

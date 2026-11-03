@@ -11,12 +11,12 @@ namespace InstructorPanel.UI
             var builder = WebApplication.CreateBuilder(args);
 
             // Add services to the container.
-            builder.Services.AddRazorComponents()
-                .AddInteractiveServerComponents();
-
+            builder.Services.AddRazorComponents().AddInteractiveServerComponents();
 
             builder.Services.AddSingleton<SimConnectService>();
-            builder.Services.AddSingleton<ISimConnectService>(sp => sp.GetRequiredService<SimConnectService>());
+            builder.Services.AddSingleton<ISimConnectService>(sp =>
+                sp.GetRequiredService<SimConnectService>()
+            );
             builder.Services.AddHostedService(sp => sp.GetRequiredService<SimConnectService>());
 
             builder.Services.AddMudServices();
@@ -33,12 +33,9 @@ namespace InstructorPanel.UI
             app.UseAntiforgery();
 
             app.MapStaticAssets();
-            app.MapRazorComponents<App>()
-                .AddInteractiveServerRenderMode();
+            app.MapRazorComponents<App>().AddInteractiveServerRenderMode();
 
-            
-
-            app.Run();                 
+            app.Run();
         }
     }
 }
