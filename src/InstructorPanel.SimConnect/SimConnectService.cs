@@ -97,6 +97,11 @@ public class SimConnectService : BackgroundService, ISimConnectService
         _grp = grp;
     }
 
+    protected SimConnectService(ILogger<SimConnectService> log)
+    {
+        _log = log;
+    }
+
     public bool IsConnected => _connected;
 
     // ---------------------------------------------------------------- commands

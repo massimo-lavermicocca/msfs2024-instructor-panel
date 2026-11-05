@@ -16,18 +16,19 @@ namespace InstructorPanel.UI.Components.Pages
         [Inject]
         protected IServiceProvider _serviceProvider { get; set; }
 
-        [Inject]
-        protected IServiceCollection _serviceCollection { get; set; }
-
-        protected ICustomSimConnectService _simConnect { get; set; }
-
         protected IReadOnlyList<Waypoint?> _wayPoints { get; set; } = new List<Waypoint>();
 
         protected override async Task OnAfterRenderAsync(bool firstRender)
         {
             if (!firstRender)
                 return;
-            //_wayPoints = await _simConnect.GetWaypointsAsync();
+
+            var _simConnect = SimConnectFactory.CreateInstance(
+                _serviceProvider,
+                AirplaneType.PMDG737
+            );
+
+            _wayPoints = await _simConnect.GetWaypointsAsync();
 
             //_simConnect.PressPmdgButton(PMDG_BUTTONS.EVT_CDU_L_L1);
             //_simConnect.PressPmdgButton(PMDG_BUTTONS.EVT_CDU_L_L1);
@@ -86,12 +87,14 @@ namespace InstructorPanel.UI.Components.Pages
             CancellationToken token
         )
         {
-            return _wayPoints
-                .Where(x =>
-                    x.Name.Contains(value ?? "", StringComparison.InvariantCultureIgnoreCase)
-                )
-                .Select(x => x.Name)
-                .OrderBy(x => x);
+            return _wayPoints is not null
+                ? _wayPoints
+                    .Where(x =>
+                        x.Name.Contains(value ?? "", StringComparison.InvariantCultureIgnoreCase)
+                    )
+                    .Select(x => x.Name)
+                    .OrderBy(x => x)
+                : new List<string>();
         }
 
         protected void OnWaypointSelected(string value)

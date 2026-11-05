@@ -25,6 +25,8 @@ namespace InstructorPanel.SimConnect.Airplanes.PMDG737
             : base(loggerFactory.CreateLogger<SimConnectService>(), _grp)
         {
             _logger = loggerFactory.CreateLogger<PMDG738>();
+
+            //base.ExecuteAsync(new());
         }
 
         public bool Configure(ConfigurationData configurationData)

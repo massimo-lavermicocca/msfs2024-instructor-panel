@@ -1,5 +1,6 @@
 ﻿using InstructorPanel.SimConnect.Airplanes.PMDG737;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
 
 namespace InstructorPanel.SimConnect
 {
@@ -7,24 +8,13 @@ namespace InstructorPanel.SimConnect
     {
         public static ICustomSimConnectService CreateInstance(
             IServiceProvider serviceProvider,
-            IServiceScopeFactory serviceScopeFactory,
-            //IServiceCollection serviceCollection,
             AirplaneType airplaneType
         )
         {
             switch (airplaneType)
             {
                 case AirplaneType.PMDG737:
-
-                    var x = serviceScopeFactory.CreateScope();
-
-                    //serviceCollection.AddSingleton<PMDG738>();
-                    //serviceCollection.AddSingleton<ICustomSimConnectService>(sp =>
-                    //    sp.GetRequiredService<PMDG738>()
-                    //);
-                    //serviceCollection.AddHostedService(sp => sp.GetRequiredService<PMDG738>());
-
-                    return serviceProvider.GetRequiredService<ICustomSimConnectService>();
+                    return new PMDG738(serviceProvider.GetRequiredService<ILoggerFactory>());
             }
 
             return null;
