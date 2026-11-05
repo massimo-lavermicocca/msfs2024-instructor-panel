@@ -14,7 +14,9 @@ namespace InstructorPanel.SimConnect
             switch (airplaneType)
             {
                 case AirplaneType.PMDG737:
-                    return new PMDG738(serviceProvider.GetRequiredService<ILoggerFactory>());
+                    var x = new PMDG738(serviceProvider.GetRequiredService<ILoggerFactory>());
+                    x.StartAsync(new());
+                    return x;
             }
 
             return null;

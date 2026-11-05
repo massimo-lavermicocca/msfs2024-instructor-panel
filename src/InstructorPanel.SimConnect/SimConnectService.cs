@@ -4,7 +4,7 @@ using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Microsoft.FlightSimulator.SimConnect;
 
-public class SimConnectService : BackgroundService, ISimConnectService
+public class SimConnectService : ISimConnectService
 {
     private enum Def
     {
@@ -306,6 +306,7 @@ public class SimConnectService : BackgroundService, ISimConnectService
     {
         try
         {
+            _log.LogWarning("Pumping");
             _sc?.ReceiveMessage();
         }
         catch (Exception ex)

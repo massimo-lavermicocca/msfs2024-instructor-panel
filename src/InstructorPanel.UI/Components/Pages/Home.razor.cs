@@ -18,15 +18,14 @@ namespace InstructorPanel.UI.Components.Pages
 
         protected IReadOnlyList<Waypoint?> _wayPoints { get; set; } = new List<Waypoint>();
 
+        private ICustomSimConnectService _simConnect;
+
         protected override async Task OnAfterRenderAsync(bool firstRender)
         {
             if (!firstRender)
                 return;
 
-            var _simConnect = SimConnectFactory.CreateInstance(
-                _serviceProvider,
-                AirplaneType.PMDG737
-            );
+            _simConnect = SimConnectFactory.CreateInstance(_serviceProvider, AirplaneType.PMDG737);
 
             _wayPoints = await _simConnect.GetWaypointsAsync();
 
@@ -54,7 +53,7 @@ namespace InstructorPanel.UI.Components.Pages
             cancellationTokenSource = new CancellationTokenSource();
             isPreparingAircraft = true;
 
-            //Task.Run(() => PrepareAircraft(_simConnect, Data, cancellationTokenSource.Token));
+            Task.Run(() => PrepareAircraft(_simConnect, Data, cancellationTokenSource.Token));
         }
 
         protected void Stop()
