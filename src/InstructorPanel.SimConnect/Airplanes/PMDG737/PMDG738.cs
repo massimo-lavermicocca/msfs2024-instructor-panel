@@ -25,11 +25,9 @@ namespace InstructorPanel.SimConnect.Airplanes.PMDG737
             : base(loggerFactory.CreateLogger<SimConnectService>(), _grp)
         {
             _logger = loggerFactory.CreateLogger<PMDG738>();
-
-            //base.ExecuteAsync(new());
         }
 
-        public bool Configure(ConfigurationData configurationData)
+        public Task<bool> Configure(ConfigurationData configurationData)
         {
             var _converter = new StringToFmcButtonConverter();
 
@@ -37,7 +35,7 @@ namespace InstructorPanel.SimConnect.Airplanes.PMDG737
 
             PressFmcButtons(x);
 
-            return true;
+            return Task.FromResult(true);
         }
 
         private void PressFmcButtons(PMDG_FMC_BUTTONS[] buttons)

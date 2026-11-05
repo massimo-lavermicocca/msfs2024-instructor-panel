@@ -2,6 +2,6 @@
 {
     public interface ICustomSimConnectService : ISimConnectService
     {
-        bool Configure(ConfigurationData configurationData);
+        Task<bool> Configure(ConfigurationData configurationData);
     }
 }

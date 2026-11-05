@@ -1,10 +1,9 @@
 ﻿using System.Runtime.InteropServices;
 using InstructorPanel.SimConnect;
-using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Microsoft.FlightSimulator.SimConnect;
 
-public class SimConnectService : ISimConnectService
+public class SimConnectService : ISimConnectService, IDisposable
 {
     private enum Def
     {
@@ -89,17 +88,23 @@ public class SimConnectService : ISimConnectService
     private readonly SemaphoreSlim _waypointGate = new(1, 1); // one waypoint request at a time
     private volatile WaypointCollector? _waypointCollector;
 
+    // The service runs its own connection thread (no hosted service needed): it is started lazily by the first
+    // command / waypoint request (or explicitly with Start) and stopped by Dispose.
+    private const int ReconnectDelayMs = 3000;
+    private const int MessageWaitMs = 200;
+    private static readonly TimeSpan ConnectTimeout = TimeSpan.FromSeconds(15);
+
+    private readonly object _startLock = new();
+    private Thread? _thread;
+    private CancellationTokenSource? _cts;
+    private bool _disposed;
+
     private readonly Grp _grp;
 
     protected SimConnectService(ILogger<SimConnectService> log, Grp grp)
     {
         _log = log;
         _grp = grp;
-    }
-
-    protected SimConnectService(ILogger<SimConnectService> log)
-    {
-        _log = log;
     }
 
     public bool IsConnected => _connected;
@@ -186,6 +191,15 @@ public class SimConnectService : ISimConnectService
         CancellationToken cancellationToken = default
     )
     {
+        // Nobody else connects for us: start the connection thread and wait until the sim answers.
+        // Without this the request below is refused (not connected yet) and the caller gets null.
+        Start();
+        if (!await WaitForConnectionAsync(ConnectTimeout, cancellationToken))
+        {
+            _log.LogWarning("Waypoint list not requested: not connected to MSFS");
+            return null;
+        }
+
         await _waypointGate.WaitAsync(cancellationToken);
         try
         {
@@ -228,6 +242,8 @@ public class SimConnectService : ISimConnectService
 
     protected bool Send(Action<SimConnect> action, string what)
     {
+        Start(); // no-op once running; the first command only triggers the connection
+
         lock (_lock)
         {
             if (!_connected || _sc is null)
@@ -255,14 +271,35 @@ public class SimConnectService : ISimConnectService
             : 0.2970756 * Math.Exp(-(h - 36089) / 20805.7);
     }
 
-    // ---------------------------------------------------------------- connection loop
+    // ---------------------------------------------------------------- connection thread
 
-    protected override async Task ExecuteAsync(CancellationToken ct)
+    /// <summary>
+    /// Starts the connection thread (connect to MSFS, read its messages, reconnect). Safe to call many times.
+    /// It is called automatically by the commands and by <see cref="GetWaypointsAsync"/>.
+    /// </summary>
+    public void Start()
     {
-        await Task.Yield();
+        lock (_startLock)
+        {
+            if (_thread is not null || _disposed)
+                return;
 
+            _cts = new CancellationTokenSource();
+            var token = _cts.Token;
+            _thread = new Thread(() => RunLoop(token))
+            {
+                IsBackground = true, // never keeps the process alive
+                Name = "SimConnect message pump",
+            };
+            _thread.Start();
+        }
+    }
+
+    private void RunLoop(CancellationToken ct)
+    {
         while (!ct.IsCancellationRequested)
         {
+            bool hasConnection;
             lock (_lock)
             {
                 if (_reconnect)
@@ -272,22 +309,19 @@ public class SimConnectService : ISimConnectService
                 }
                 if (_sc is null)
                     TryConnect();
+
+                hasConnection = _sc is not null;
             }
 
-            if (_sc is null)
+            if (!hasConnection)
             {
-                try
-                {
-                    await Task.Delay(3000, ct);
-                }
-                catch (OperationCanceledException)
-                {
+                // Sim not running yet: wait, but wake up immediately on Dispose.
+                if (ct.WaitHandle.WaitOne(ReconnectDelayMs))
                     break;
-                }
                 continue;
             }
 
-            if (_msgEvent.WaitOne(200))
+            if (_msgEvent.WaitOne(MessageWaitMs))
             {
                 lock (_lock)
                     Pump();
@@ -298,6 +332,35 @@ public class SimConnectService : ISimConnectService
             Disconnect();
     }
 
+    private async Task<bool> WaitForConnectionAsync(TimeSpan timeout, CancellationToken ct)
+    {
+        var deadline = DateTime.UtcNow + timeout;
+        while (!_connected)
+        {
+            if (DateTime.UtcNow >= deadline)
+                return false;
+            await Task.Delay(100, ct);
+        }
+        return true;
+    }
+
+    public void Dispose()
+    {
+        Thread? thread;
+        lock (_startLock)
+        {
+            if (_disposed)
+                return;
+            _disposed = true;
+            _cts?.Cancel();
+            thread = _thread;
+        }
+
+        thread?.Join(2000); // the loop disconnects on exit
+        _cts?.Dispose();
+        _msgEvent.Dispose();
+    }
+
     // _msgEvent is an AutoResetEvent: it is signalled once even when several messages are queued, and
     // ReceiveMessage() reads only one. A waypoint list is split into many messages that arrive together, so
     // reading one per signal leaves the last chunks in the queue and the request never completes.
@@ -306,7 +369,6 @@ public class SimConnectService : ISimConnectService
     {
         try
         {
-            _log.LogWarning("Pumping");
             _sc?.ReceiveMessage();
         }
         catch (Exception ex)
@@ -334,7 +396,7 @@ public class SimConnectService : ISimConnectService
     {
         try
         {
-            var sc = new SimConnect("Pmdg737Api", IntPtr.Zero, 0, _msgEvent, 0);
+            var sc = new SimConnect(_grp.ToString(), IntPtr.Zero, 0, _msgEvent, 0);
             sc.OnRecvOpen += OnOpen;
             sc.OnRecvQuit += (_, _) =>
             {

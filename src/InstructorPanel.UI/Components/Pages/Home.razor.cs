@@ -28,28 +28,10 @@ namespace InstructorPanel.UI.Components.Pages
             _simConnect = SimConnectFactory.CreateInstance(_serviceProvider, AirplaneType.PMDG737);
 
             _wayPoints = await _simConnect.GetWaypointsAsync();
-
-            //_simConnect.PressPmdgButton(PMDG_BUTTONS.EVT_CDU_L_L1);
-            //_simConnect.PressPmdgButton(PMDG_BUTTONS.EVT_CDU_L_L1);
-            //_simConnect.PressPmdgButton(PMDG_BUTTONS.EVT_CDU_L_R6);
-            //_simConnect.PressPmdgButton(PMDG_BUTTONS.EVT_CDU_L_L);
-            //_simConnect.PressPmdgButton(PMDG_BUTTONS.EVT_CDU_L_I);
-            //_simConnect.PressPmdgButton(PMDG_BUTTONS.EVT_CDU_L_B);
-            //_simConnect.PressPmdgButton(PMDG_BUTTONS.EVT_CDU_L_D);
-            //_simConnect.PressPmdgButton(PMDG_BUTTONS.EVT_CDU_L_L2);
         }
 
         protected async Task StartPreparingAircraft()
         {
-            //_simConnect = SimConnectFactory.CreateInstance(
-            //    _serviceProvider,
-            //    _serviceProvider.Services,
-            //    AirplaneType.PMDG737
-            //);
-
-            //_simConnect.SetIas(Data.Speed);
-            //_simConnect.SetSpeed(Data.Speed);
-
             cancellationTokenSource = new CancellationTokenSource();
             isPreparingAircraft = true;
 

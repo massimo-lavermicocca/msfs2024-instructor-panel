@@ -1,5 +1,3 @@
-using InstructorPanel.SimConnect;
-using InstructorPanel.SimConnect.Airplanes.PMDG737;
 using InstructorPanel.UI.Components;
 using MudBlazor.Services;
 
@@ -13,15 +11,6 @@ namespace InstructorPanel.UI
 
             // Add services to the container.
             builder.Services.AddRazorComponents().AddInteractiveServerComponents();
-
-            //builder.Services.AddSingleton<SimConnectService>();
-            //builder.Services.AddSingleton<ISimConnectService>(sp =>
-            //    sp.GetRequiredService<SimConnectService>()
-            //);
-            //builder.Services.AddHostedService(sp => sp.GetRequiredService<SimConnectService>());
-
-            //builder.Services.AddSingleton<PMDG738>();
-            //builder.Services.AddHostedService(sp => sp.GetRequiredService<PMDG738>());
 
             builder.Services.AddMudServices();
 
