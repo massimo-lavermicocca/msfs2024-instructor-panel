@@ -4,7 +4,7 @@ using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Microsoft.FlightSimulator.SimConnect;
 
-public sealed class SimConnectService : BackgroundService, ISimConnectService
+public class SimConnectService : BackgroundService, ISimConnectService
 {
     private enum Def
     {
@@ -27,7 +27,7 @@ public sealed class SimConnectService : BackgroundService, ISimConnectService
         PmdgFlaps,
     }
 
-    private enum Grp
+    protected enum Grp
     {
         Pmdg,
     }
@@ -67,7 +67,7 @@ public sealed class SimConnectService : BackgroundService, ISimConnectService
 
     private readonly AutoResetEvent _msgEvent = new(false);
     private readonly object _lock = new(); // SimConnect is not thread-safe
-    private SimConnect? _sc;
+    protected SimConnect? _sc;
     private volatile bool _connected;
     private volatile bool _reconnect;
     private TaskCompletionSource<double>? _altitudeRequest;
@@ -89,9 +89,12 @@ public sealed class SimConnectService : BackgroundService, ISimConnectService
     private readonly SemaphoreSlim _waypointGate = new(1, 1); // one waypoint request at a time
     private volatile WaypointCollector? _waypointCollector;
 
-    public SimConnectService(ILogger<SimConnectService> log)
+    private readonly Grp _grp;
+
+    protected SimConnectService(ILogger<SimConnectService> log, Grp grp)
     {
         _log = log;
+        _grp = grp;
     }
 
     public bool IsConnected => _connected;
@@ -165,7 +168,7 @@ public sealed class SimConnectService : BackgroundService, ISimConnectService
                     SimConnect.SIMCONNECT_OBJECT_ID_USER,
                     Evt.PmdgFlaps,
                     parameter,
-                    Grp.Pmdg,
+                    _grp,
                     SIMCONNECT_EVENT_FLAG.GROUPID_IS_PRIORITY
                 ),
             "Flaps"
@@ -218,7 +221,7 @@ public sealed class SimConnectService : BackgroundService, ISimConnectService
             what
         );
 
-    private bool Send(Action<SimConnect> action, string what)
+    protected bool Send(Action<SimConnect> action, string what)
     {
         lock (_lock)
         {
@@ -474,8 +477,8 @@ public sealed class SimConnectService : BackgroundService, ISimConnectService
         if (_flapsEventId != 0)
         {
             sc.MapClientEventToSimEvent(Evt.PmdgFlaps, "#" + _flapsEventId);
-            sc.AddClientEventToNotificationGroup(Grp.Pmdg, Evt.PmdgFlaps, false);
-            sc.SetNotificationGroupPriority(Grp.Pmdg, SimConnect.SIMCONNECT_GROUP_PRIORITY_HIGHEST);
+            sc.AddClientEventToNotificationGroup(_grp, Evt.PmdgFlaps, false);
+            sc.SetNotificationGroupPriority(_grp, SimConnect.SIMCONNECT_GROUP_PRIORITY_HIGHEST);
         }
 
         sc.AddToDataDefinition(

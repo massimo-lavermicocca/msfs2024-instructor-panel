@@ -1,6 +1,7 @@
 using InstructorPanel.SimConnect;
 using InstructorPanel.UI.Models;
 using Microsoft.AspNetCore.Components;
+using static SimConnectService;
 
 namespace InstructorPanel.UI.Components.Pages
 {
@@ -13,7 +14,12 @@ namespace InstructorPanel.UI.Components.Pages
         protected string SelectedWaypoint = null;
 
         [Inject]
-        protected ISimConnectService _simConnect { get; set; }
+        protected IServiceProvider _serviceProvider { get; set; }
+
+        [Inject]
+        protected IServiceCollection _serviceCollection { get; set; }
+
+        protected ICustomSimConnectService _simConnect { get; set; }
 
         protected IReadOnlyList<Waypoint?> _wayPoints { get; set; } = new List<Waypoint>();
 
@@ -21,18 +27,33 @@ namespace InstructorPanel.UI.Components.Pages
         {
             if (!firstRender)
                 return;
-            _wayPoints = await _simConnect.GetWaypointsAsync();
+            //_wayPoints = await _simConnect.GetWaypointsAsync();
+
+            //_simConnect.PressPmdgButton(PMDG_BUTTONS.EVT_CDU_L_L1);
+            //_simConnect.PressPmdgButton(PMDG_BUTTONS.EVT_CDU_L_L1);
+            //_simConnect.PressPmdgButton(PMDG_BUTTONS.EVT_CDU_L_R6);
+            //_simConnect.PressPmdgButton(PMDG_BUTTONS.EVT_CDU_L_L);
+            //_simConnect.PressPmdgButton(PMDG_BUTTONS.EVT_CDU_L_I);
+            //_simConnect.PressPmdgButton(PMDG_BUTTONS.EVT_CDU_L_B);
+            //_simConnect.PressPmdgButton(PMDG_BUTTONS.EVT_CDU_L_D);
+            //_simConnect.PressPmdgButton(PMDG_BUTTONS.EVT_CDU_L_L2);
         }
 
         protected async Task StartPreparingAircraft()
         {
-            _simConnect.SetIas(Data.Speed);
-            _simConnect.SetSpeed(Data.Speed);
+            //_simConnect = SimConnectFactory.CreateInstance(
+            //    _serviceProvider,
+            //    _serviceProvider.Services,
+            //    AirplaneType.PMDG737
+            //);
+
+            //_simConnect.SetIas(Data.Speed);
+            //_simConnect.SetSpeed(Data.Speed);
 
             cancellationTokenSource = new CancellationTokenSource();
             isPreparingAircraft = true;
 
-            Task.Run(() => PrepareAircraft(_simConnect, Data, cancellationTokenSource.Token));
+            //Task.Run(() => PrepareAircraft(_simConnect, Data, cancellationTokenSource.Token));
         }
 
         protected void Stop()
