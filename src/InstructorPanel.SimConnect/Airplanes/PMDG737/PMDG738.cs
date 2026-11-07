@@ -40,6 +40,7 @@ namespace InstructorPanel.SimConnect.Airplanes.PMDG737
             : base(loggerFactory.CreateLogger<SimConnectService>(), _grp)
         {
             _logger = loggerFactory.CreateLogger<PMDG738>();
+
             RegisterCustomEvents();
         }
 
@@ -87,15 +88,15 @@ namespace InstructorPanel.SimConnect.Airplanes.PMDG737
 
         private void RegisterCustomEvents()
         {
-            if (_flapsEventId != 0)
-            {
-                _sc.MapClientEventToSimEvent(Evt.PmdgFlaps, "#" + _flapsEventId);
-                _sc.AddClientEventToNotificationGroup(_grp, Evt.PmdgFlaps, false);
-                _sc.SetNotificationGroupPriority(
-                    _grp,
-                    SDK.SimConnect.SIMCONNECT_GROUP_PRIORITY_HIGHEST
-                );
-            }
+            //if (_flapsEventId != 0)
+            //{
+            //    _sc.MapClientEventToSimEvent(Evt.PmdgFlaps, "#" + _flapsEventId);
+            //    _sc.AddClientEventToNotificationGroup(_grp, Evt.PmdgFlaps, false);
+            //    _sc.SetNotificationGroupPriority(
+            //        _grp,
+            //        SDK.SimConnect.SIMCONNECT_GROUP_PRIORITY_HIGHEST
+            //    );
+            //}
         }
 
         private void PressFmcButtons(PMDG_FMC_BUTTONS[] buttons)
