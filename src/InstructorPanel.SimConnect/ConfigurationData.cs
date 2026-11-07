@@ -2,7 +2,6 @@
 {
     public class ConfigurationData
     {
-        public string Location { get; set; }
-        
+        public string Airport { get; set; }
     }
 }

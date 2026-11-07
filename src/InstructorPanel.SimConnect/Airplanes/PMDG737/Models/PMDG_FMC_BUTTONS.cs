@@ -1,6 +1,6 @@
 ﻿namespace InstructorPanel.SimConnect.Airplanes.PMDG737.Models
 {
-    public enum PMDG_FMC_BUTTONS: uint
+    public enum PMDG_FMC_BUTTONS : uint
     {
         EVT_CDU_L_L1 = 534,
         EVT_CDU_L_L2 = 535,

@@ -1,7 +1,6 @@
 using InstructorPanel.SimConnect;
 using InstructorPanel.UI.Models;
 using Microsoft.AspNetCore.Components;
-using static SimConnectService;
 
 namespace InstructorPanel.UI.Components.Pages
 {
@@ -35,7 +34,7 @@ namespace InstructorPanel.UI.Components.Pages
             cancellationTokenSource = new CancellationTokenSource();
             isPreparingAircraft = true;
 
-            Task.Run(() => PrepareAircraft(_simConnect, Data, cancellationTokenSource.Token));
+            _ = Task.Run(() => PrepareAircraft(cancellationTokenSource.Token));
         }
 
         protected void Stop()
@@ -44,22 +43,20 @@ namespace InstructorPanel.UI.Components.Pages
             isPreparingAircraft = false;
         }
 
-        protected async Task PrepareAircraft(
-            ISimConnectService simConnect,
-            InstructorData data,
-            CancellationToken token
-        )
+        protected async Task PrepareAircraft(CancellationToken token)
         {
             while (!token.IsCancellationRequested)
             {
-                simConnect.Teleport(data.Latitude, data.Longitude, data.Altitude);
+                await _simConnect.Configure(new ConfigurationData() { });
+
+                _simConnect.Teleport(Data.Latitude, Data.Longitude, Data.Altitude);
 
                 await Task.Delay(1000, token);
 
-                simConnect.SetHeading(data.Heading);
-                simConnect.SetPitch(3);
-
-                simConnect.SetRoll(0);
+                _simConnect.SetHeading(Data.Heading);
+                _simConnect.SetPitch(3);
+                _simConnect.SetRoll(0);
+                _simConnect.SetIas(Data.Speed);
             }
         }
 
