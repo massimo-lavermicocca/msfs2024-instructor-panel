@@ -13,26 +13,28 @@ namespace InstructorPanel.UI.Components.Pages
         protected string SelectedWaypoint = null;
 
         [Inject]
-        protected ISimConnectService _simConnect { get; set; }
+        protected IServiceProvider _serviceProvider { get; set; }
 
         protected IReadOnlyList<Waypoint?> _wayPoints { get; set; } = new List<Waypoint>();
+
+        private ICustomSimConnectService _simConnect;
 
         protected override async Task OnAfterRenderAsync(bool firstRender)
         {
             if (!firstRender)
                 return;
+
+            _simConnect = SimConnectFactory.CreateInstance(_serviceProvider, AirplaneType.PMDG737);
+
             _wayPoints = await _simConnect.GetWaypointsAsync();
         }
 
         protected async Task StartPreparingAircraft()
         {
-            _simConnect.SetIas(Data.Speed);
-            _simConnect.SetSpeed(Data.Speed);
-
             cancellationTokenSource = new CancellationTokenSource();
             isPreparingAircraft = true;
 
-            Task.Run(() => PrepareAircraft(_simConnect, Data, cancellationTokenSource.Token));
+            _ = Task.Run(() => PrepareAircraft(cancellationTokenSource.Token));
         }
 
         protected void Stop()
@@ -41,22 +43,20 @@ namespace InstructorPanel.UI.Components.Pages
             isPreparingAircraft = false;
         }
 
-        protected async Task PrepareAircraft(
-            ISimConnectService simConnect,
-            InstructorData data,
-            CancellationToken token
-        )
+        protected async Task PrepareAircraft(CancellationToken token)
         {
             while (!token.IsCancellationRequested)
             {
-                simConnect.Teleport(data.Latitude, data.Longitude, data.Altitude);
+                await _simConnect.Configure(new ConfigurationData() { });
+
+                _simConnect.Teleport(Data.Latitude, Data.Longitude, Data.Altitude);
 
                 await Task.Delay(1000, token);
 
-                simConnect.SetHeading(data.Heading);
-                simConnect.SetPitch(3);
-
-                simConnect.SetRoll(0);
+                _simConnect.SetHeading(Data.Heading);
+                _simConnect.SetPitch(3);
+                _simConnect.SetRoll(0);
+                _simConnect.SetIas(Data.Speed);
             }
         }
 
@@ -65,12 +65,14 @@ namespace InstructorPanel.UI.Components.Pages
             CancellationToken token
         )
         {
-            return _wayPoints
-                .Where(x =>
-                    x.Name.Contains(value ?? "", StringComparison.InvariantCultureIgnoreCase)
-                )
-                .Select(x => x.Name)
-                .OrderBy(x => x);
+            return _wayPoints is not null
+                ? _wayPoints
+                    .Where(x =>
+                        x.Name.Contains(value ?? "", StringComparison.InvariantCultureIgnoreCase)
+                    )
+                    .Select(x => x.Name)
+                    .OrderBy(x => x)
+                : new List<string>();
         }
 
         protected void OnWaypointSelected(string value)

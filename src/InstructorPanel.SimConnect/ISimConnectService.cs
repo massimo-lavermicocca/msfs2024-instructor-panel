@@ -20,9 +20,6 @@
         /// <summary>Sets true heading in whole degrees (0-359).</summary>
         bool SetHeading(int degrees);
 
-        /// <summary>Sets the PMDG 737 flap lever. Valid detents: 1, 5, 15, 30, 40.</summary>
-        bool SetFlaps(int detent);
-
         /// <summary>Sets roll in degree.</summary>
         bool SetRoll(int roll);
 
