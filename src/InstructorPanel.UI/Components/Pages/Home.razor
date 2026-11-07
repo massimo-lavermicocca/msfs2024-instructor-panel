@@ -1,42 +1,59 @@
 ﻿@page "/"
-@rendermode InteractiveServer
-
-@* Required *@
-<MudThemeProvider />
-<MudPopoverProvider />
-
-@* Needed for dialogs *@
-<MudDialogProvider />
-
-@* Needed for snackbars *@
-<MudSnackbarProvider />
+@using InstructorPanel.SimConnect
 
 <PageTitle>Home</PageTitle>
 
-Position:
-<MudGrid>
-    <MudItem xs="4">
-         <MudAutocomplete T="string" Label="Waypoint"
-               ValueChanged="OnWaypointSelected" SearchFunc="@SearchWaypoint" 
-               AdornmentIcon="@Icons.Material.Filled.Search" AdornmentColor="Color.Primary" />
-    </MudItem>
-    <MudItem xs="4">
-        <MudTextField @bind-Value="Data.Latitude" Label="Latitude" Variant="Variant.Outlined"></MudTextField>
-    </MudItem>
-    <MudItem xs="4">
-        <MudTextField @bind-Value="Data.Longitude" Label="Longitude" Variant="Variant.Outlined"></MudTextField>
-    </MudItem>
-    <MudItem xs="4">
-        <MudTextField @bind-Value="Data.Altitude" Label="Altitude" Variant="Variant.Outlined"></MudTextField>
-    </MudItem>
-    <MudItem xs="4">
-        <MudTextField @bind-Value="Data.Heading" Label="Heading" Variant="Variant.Outlined"></MudTextField>
-    </MudItem>
-    <MudItem xs="4">
-        <MudTextField @bind-Value="Data.Speed" Label="Speed" Variant="Variant.Outlined"></MudTextField>
-    </MudItem>
-</MudGrid>
-<br />
+    <MudText Typo="Typo.h6">Aircraft:</MudText>
+    <MudGrid>
+        <MudItem xs="4" >
+            <MudAutocomplete T="AirplaneType?" Label="Aircraft type"
+                             ValueChanged="OnAircraftTypeSelected"
+                             SearchFunc="@SearchAircraftType"
+                         AdornmentIcon="@Icons.Material.Filled.Search" AdornmentColor="Color.Primary" Variant="Variant.Outlined" Value="@null"/>
+        </MudItem>
+    <MudItem xs="4" style="align-content: center;">
+            <MudText Typo="Typo.subtitle1">Simulator Status 
+            @if (_simConnect is null || !_simConnect.IsConnected)
+            {
+                <MudIcon align-center Icon="@Icons.Material.Outlined.Warning" Color="Color.Warning"></MudIcon>
+            } 
+            else
+            {
+                <MudIcon align-center Icon="@Icons.Material.Outlined.Done" Color="Color.Success"></MudIcon>
+            }
+        </MudText>
+       </MudItem>
+    </MudGrid>
+
+
+    <br /><br />
+
+@if (!(_simConnect is null) && _simConnect.IsConnected)
+{
+    <MudText Typo="Typo.h6">Position:</MudText>
+    <MudGrid>
+        <MudItem xs="4">
+            <MudAutocomplete T="string" Label="Waypoint"
+            ValueChanged="OnWaypointSelected" SearchFunc="@SearchWaypoint" 
+            AdornmentIcon="@Icons.Material.Filled.Search" AdornmentColor="Color.Primary" Variant="Variant.Outlined" />
+        </MudItem>
+        <MudItem xs="4">
+            <MudTextField @bind-Value="Data.Latitude" Label="Latitude" Variant="Variant.Outlined"></MudTextField>
+        </MudItem>
+        <MudItem xs="4">
+            <MudTextField @bind-Value="Data.Longitude" Label="Longitude" Variant="Variant.Outlined"></MudTextField>
+        </MudItem>
+        <MudItem xs="4">
+            <MudTextField @bind-Value="Data.Altitude" Label="Altitude" Variant="Variant.Outlined"></MudTextField>
+        </MudItem>
+        <MudItem xs="4">
+            <MudTextField @bind-Value="Data.Heading" Label="Heading" Variant="Variant.Outlined"></MudTextField>
+        </MudItem>
+        <MudItem xs="4">
+            <MudTextField @bind-Value="Data.Speed" Label="Speed" Variant="Variant.Outlined"></MudTextField>
+        </MudItem>
+    </MudGrid>
+    <br />
 
     @if (isPreparingAircraft == false)
     {
@@ -44,7 +61,8 @@ Position:
     }
     else
     {
-    <MudButton Variant="Variant.Filled" Color="Color.Secondary" @onclick="Stop">Stop</MudButton>
+        <MudButton Variant="Variant.Filled" Color="Color.Secondary" @onclick="Stop">Stop</MudButton>
     }
 
+}
 

@@ -1,4 +1,5 @@
 using InstructorPanel.SimConnect;
+using InstructorPanel.SimConnect.Airplanes.PMDG737;
 using InstructorPanel.UI.Models;
 using Microsoft.AspNetCore.Components;
 
@@ -23,10 +24,6 @@ namespace InstructorPanel.UI.Components.Pages
         {
             if (!firstRender)
                 return;
-
-            _simConnect = SimConnectFactory.CreateInstance(_serviceProvider, AirplaneType.PMDG737);
-
-            _wayPoints = await _simConnect.GetWaypointsAsync();
         }
 
         protected async Task StartPreparingAircraft()
@@ -62,7 +59,7 @@ namespace InstructorPanel.UI.Components.Pages
 
         protected async Task<IEnumerable<string>> SearchWaypoint(
             string value,
-            CancellationToken token
+            CancellationToken cancellationToken = default
         )
         {
             return _wayPoints is not null
@@ -83,6 +80,31 @@ namespace InstructorPanel.UI.Components.Pages
                 Data.Latitude = selectedWaypoint.Latitude;
                 Data.Longitude = selectedWaypoint.Longitude;
             }
+        }
+
+        protected async Task OnAircraftTypeSelected(AirplaneType? airplaneType)
+        {
+            if (airplaneType.HasValue)
+            {
+                _simConnect = SimConnectFactory.CreateInstance(
+                    _serviceProvider,
+                    airplaneType.Value
+                );
+
+                _wayPoints = await _simConnect.GetWaypointsAsync();
+            }
+        }
+
+        protected Task<IEnumerable<AirplaneType?>> SearchAircraftType(
+            string _,
+            CancellationToken cancellationToken = default
+        )
+        {
+            return Task.FromResult(
+                Enum.GetValues<AirplaneType>()
+                    .Where(x => x != AirplaneType.Undefined)
+                    .Select(x => x as AirplaneType?)
+            );
         }
     }
 }

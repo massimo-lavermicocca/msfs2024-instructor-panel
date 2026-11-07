@@ -1,8 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
-
-namespace InstructorPanel.SimConnect
+﻿namespace InstructorPanel.SimConnect
 {
     public enum AirplaneType
     {

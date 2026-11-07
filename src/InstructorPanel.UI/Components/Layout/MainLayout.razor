@@ -1,15 +1,18 @@
 ﻿@inherits LayoutComponentBase
 
+@* Required *@
+<MudThemeProvider Theme="InstructorPanelTheme" />
+<MudPopoverProvider />
+
+@* Needed for dialogs *@
+<MudDialogProvider />
+
+@* Needed for snackbars *@
+<MudSnackbarProvider />
+
 <div class="page">
-    <div class="sidebar">
-        <NavMenu />
-    </div>
 
     <main>
-        <div class="top-row px-4">
-            <a href="https://learn.microsoft.com/aspnet/core/" target="_blank">About</a>
-        </div>
-
         <article class="content px-4">
             @Body
         </article>
@@ -21,3 +24,44 @@
     <a href="." class="reload">Reload</a>
     <span class="dismiss">🗙</span>
 </div>
+
+
+@code {
+    MudTheme InstructorPanelTheme = new MudTheme()
+    {
+        PaletteLight = new PaletteLight()
+        {
+            Primary = "#0B84D6",
+            Secondary = "#E08E00",
+            Background = "#F3F6FA",
+            Surface = "#FFFFFF",
+            AppbarBackground = "#FFFFFF",
+            AppbarText = "#0E141B",
+            DrawerBackground = "#FFFFFF",
+            TextPrimary = "#0E141B",
+            TextSecondary = "#4A5B6E",
+            ActionDefault = "#4A5B6E",
+            Divider = "#D5DEE8",
+            LinesDefault = "#D5DEE8",
+        },
+        PaletteDark = new PaletteDark
+        {
+            Primary = "#1E9BF0",
+            Secondary = "#F5A623",
+            Background = "#0E141B",
+            Surface = "#18212C",
+            AppbarBackground = "#0E141B",
+            DrawerBackground = "#0E141B",
+            TextPrimary = "#E6EDF3",
+            TextSecondary = "#9FB0C3",
+            ActionDefault = "#9FB0C3",
+            Divider = "#263445",
+            LinesDefault = "#263445",
+        },
+        LayoutProperties = new LayoutProperties()
+        {
+            DrawerWidthLeft = "260px",
+            DrawerWidthRight = "300px"
+        }
+    };
+}
