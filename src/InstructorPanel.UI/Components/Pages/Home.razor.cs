@@ -5,7 +5,7 @@ using Microsoft.AspNetCore.Components;
 
 namespace InstructorPanel.UI.Components.Pages
 {
-    public partial class Home : ComponentBase
+    public partial class Home : ComponentBase, IDisposable
     {
         protected InstructorData Data { get; set; } = new();
         protected CancellationTokenSource cancellationTokenSource;
@@ -105,6 +105,11 @@ namespace InstructorPanel.UI.Components.Pages
                     .Where(x => x != AirplaneType.Undefined)
                     .Select(x => x as AirplaneType?)
             );
+        }
+
+        public void Dispose()
+        {
+            _simConnect.Dispose();
         }
     }
 }

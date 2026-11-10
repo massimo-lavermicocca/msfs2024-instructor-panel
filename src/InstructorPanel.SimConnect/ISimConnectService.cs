@@ -1,6 +1,6 @@
 ﻿namespace InstructorPanel.SimConnect
 {
-    public interface ISimConnectService
+    public interface ISimConnectService : IDisposable
     {
         /// <summary>True when connected to MSFS.</summary>
         bool IsConnected { get; }
