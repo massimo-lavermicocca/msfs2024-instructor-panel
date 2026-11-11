@@ -86,11 +86,14 @@ namespace InstructorPanel.UI.Components.Pages
         {
             if (airplaneType.HasValue)
             {
+                if (isPreparingAircraft)
+                    Stop();
+
+                _simConnect?.Dispose();
                 _simConnect = SimConnectFactory.CreateInstance(
                     _serviceProvider,
                     airplaneType.Value
                 );
-
                 _wayPoints = await _simConnect.GetWaypointsAsync();
             }
         }
@@ -109,7 +112,10 @@ namespace InstructorPanel.UI.Components.Pages
 
         public void Dispose()
         {
-            _simConnect.Dispose();
+            _simConnect?.Dispose();
+
+            cancellationTokenSource?.Cancel();
+            cancellationTokenSource?.Dispose();
         }
     }
 }
