@@ -1,24 +1,21 @@
 using InstructorPanel.SimConnect;
-using InstructorPanel.SimConnect.Airplanes.PMDG737;
 using InstructorPanel.UI.Models;
 using Microsoft.AspNetCore.Components;
 
 namespace InstructorPanel.UI.Components.Pages
 {
-    public partial class Home : ComponentBase
+    public partial class Home : ComponentBase, IDisposable
     {
-        protected InstructorData Data { get; set; } = new();
-        protected CancellationTokenSource cancellationTokenSource;
-        protected bool isPreparingAircraft;
-
-        protected string SelectedWaypoint = null;
+        private InstructorData Data { get; set; } = new();
+        private CancellationTokenSource? cancellationTokenSource;
+        private bool isPreparingAircraft;
 
         [Inject]
-        protected IServiceProvider _serviceProvider { get; set; }
+        public required IServiceProvider _serviceProvider { get; set; }
 
-        protected IReadOnlyList<Waypoint?> _wayPoints { get; set; } = new List<Waypoint>();
+        private IReadOnlyList<Waypoint?> _wayPoints { get; set; } = new List<Waypoint>();
 
-        private ICustomSimConnectService _simConnect;
+        private ICustomSimConnectService? _simConnect;
 
         protected override async Task OnAfterRenderAsync(bool firstRender)
         {
@@ -36,24 +33,27 @@ namespace InstructorPanel.UI.Components.Pages
 
         protected void Stop()
         {
-            cancellationTokenSource.Cancel();
+            cancellationTokenSource?.Cancel();
             isPreparingAircraft = false;
         }
 
         protected async Task PrepareAircraft(CancellationToken token)
         {
-            while (!token.IsCancellationRequested)
+            if (_simConnect is not null)
             {
-                await _simConnect.Configure(new ConfigurationData() { });
+                while (!token.IsCancellationRequested)
+                {
+                    await _simConnect.Configure(new ConfigurationData() { });
 
-                _simConnect.Teleport(Data.Latitude, Data.Longitude, Data.Altitude);
+                    _simConnect.Teleport(Data.Latitude, Data.Longitude, Data.Altitude);
 
-                await Task.Delay(1000, token);
+                    await Task.Delay(1000, token);
 
-                _simConnect.SetHeading(Data.Heading);
-                _simConnect.SetPitch(3);
-                _simConnect.SetRoll(0);
-                _simConnect.SetIas(Data.Speed);
+                    _simConnect.SetHeading(Data.Heading);
+                    _simConnect.SetPitch(3);
+                    _simConnect.SetRoll(0);
+                    _simConnect.SetIas(Data.Speed);
+                }
             }
         }
 
@@ -86,11 +86,14 @@ namespace InstructorPanel.UI.Components.Pages
         {
             if (airplaneType.HasValue)
             {
+                if (isPreparingAircraft)
+                    Stop();
+
+                _simConnect?.Dispose();
                 _simConnect = SimConnectFactory.CreateInstance(
                     _serviceProvider,
                     airplaneType.Value
                 );
-
                 _wayPoints = await _simConnect.GetWaypointsAsync();
             }
         }
@@ -105,6 +108,15 @@ namespace InstructorPanel.UI.Components.Pages
                     .Where(x => x != AirplaneType.Undefined)
                     .Select(x => x as AirplaneType?)
             );
+        }
+
+        public void Dispose()
+        {
+            cancellationTokenSource?.Cancel();
+            cancellationTokenSource?.Dispose();
+            _simConnect?.Dispose();
+
+            GC.SuppressFinalize(this);
         }
     }
 }
